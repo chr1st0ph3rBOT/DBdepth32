@@ -1,0 +1,65 @@
+import time
+import mss
+import numpy as np
+import cv2
+import os
+import threading
+
+# 캡처 이미지 저장 폴더
+save_dir = "screen_captures"
+os.makedirs(save_dir, exist_ok=True)
+
+# 작업표시줄 제외한 화면 크기 설정
+with mss.mss() as sct:
+    monitor = sct.monitors[1]
+    full_width = monitor["width"]
+    full_height = monitor["height"]
+    taskbar_height = 50  # 작업표시줄 높이 추정값
+    capture_region = {
+        "top": monitor["top"],
+        "left": monitor["left"],
+        "width": full_width,
+        "height": full_height - taskbar_height
+    }
+
+# 이미지 자동 삭제 함수 (5초 이상된 이미지 삭제)
+def delete_old_images():
+    max_age = 5  # 초
+    while True:
+        now = time.time()
+        for fname in os.listdir(save_dir):
+            if fname.endswith(".png"):
+                fpath = os.path.join(save_dir, fname)
+                if now - os.path.getmtime(fpath) > max_age:
+                    try:
+                        os.remove(fpath)
+                        print(f"[Deleted] {fname}")
+                    except Exception as e:
+                        print(f"[Error deleting] {fname}: {e}")
+        time.sleep(1)
+
+# 캡처 함수
+def capture_images():
+    idx = 0
+    try:
+        while True:
+            with mss.mss() as sct:
+                img = np.array(sct.grab(capture_region))
+                img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+                fname = os.path.join(save_dir, f"cap_{idx:04d}.png")
+                cv2.imwrite(fname, img)
+                print(f"[Saved] {fname}")
+                idx += 1
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("\n[캡처 중단됨]")
+
+if __name__ == "__main__":
+    print("화면 캡처 + 5초 이후 자동 삭제 시작 (종료: Ctrl+C)")
+    
+    # 이미지 삭제 쓰레드 시작
+    delete_thread = threading.Thread(target=delete_old_images, daemon=True)
+    delete_thread.start()
+
+    # 메인 쓰레드는 캡처 수행
+    capture_images()
