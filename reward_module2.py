@@ -18,3 +18,12 @@ def calculate_icm_reward(icm_model, state, next_state, action):
         reward = icm_model.forward_loss(state, next_state, action)
 
     return reward.mean().item()
+
+
+def define_ex_reward():
+    sdhfsdfbdjsf
+
+    return result
+
+# 최종 보상 = 외재 보상 + curiosity 보상 (weight 조절 가능)
+result_reward = extrinsic_reward + beta * curiosity_reward
