@@ -13,6 +13,6 @@ def calculate_reward(state, next_state, action):
     state_diff = (next_state - state).abs().mean()
     
     # 보상 계산 (상태 차이가 클수록 보상이 높아짐)
-    reward = -state_diff
+    reward = state_diff
 
     return reward.item()
